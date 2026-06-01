@@ -193,7 +193,7 @@ OPENAI_API_KEY=sk-...       # Requerido: Clave API de OpenAI
 
 ## 📚 Documentación Adicional
 
-- [Backend README](../ArisBackend/README.md) - Detalles de la API
+- [Backend README](./ArisBackend/README.md) - Detalles de la API
 - [OpenAI Docs](https://platform.openai.com/docs) - Documentación de OpenAI
 
 ## 🤝 Contribuir
@@ -208,7 +208,7 @@ Las contribuciones son bienvenidas. Por favor:
 
 ## 📄 Licencia
 
-Este proyecto está licenciado bajo la MIT License - ver el archivo [LICENSE](../LICENSE) para detalles.
+Este proyecto está licenciado bajo la MIT License - ver el archivo [LICENSE](LICENSE) para detalles.
 
 ## 👨‍💻 Autores
 

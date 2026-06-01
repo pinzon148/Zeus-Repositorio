@@ -218,18 +218,7 @@ async def aris_fast(request: ChatRequest):
             temperature=request.temperature,
             max_tokens=request.max_tokens,
         )
-        
-        # Extraer el contenido de la respuesta
-        content = response.choices[0].message.content
-        
-        return {
-            "choices": [
-                {
-                    "message": {
-                        "content": content
-                    }
-                }
-            ]
-        }
+
+        return response.to_dict() if hasattr(response, "to_dict") else response
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))

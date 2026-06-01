@@ -50,7 +50,16 @@ function App() {
       })
 
       if (!response.ok) {
-        throw new Error(`Backend error: ${response.statusText}`)
+        let errorText = response.statusText
+        try {
+          const errorBody = await response.json()
+          if (errorBody?.detail) {
+            errorText = errorBody.detail
+          }
+        } catch {
+          // ignore parse error
+        }
+        throw new Error(`Backend error: ${errorText}`)
       }
 
       const data = await response.json()
