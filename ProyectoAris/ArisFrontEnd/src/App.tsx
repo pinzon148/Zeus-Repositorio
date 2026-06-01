@@ -7,6 +7,8 @@ type Message = {
   text: string
 }
 
+const BACKEND_URL = 'http://localhost:8000'
+
 const initialMessages: Message[] = [
   {
     id: 'm1',
@@ -18,22 +20,75 @@ const initialMessages: Message[] = [
 function App() {
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const prompt = input.trim()
     if (!prompt) return
 
-    setMessages((prev) => [
-      ...prev,
-      { id: `u-${Date.now()}`, role: 'user', text: prompt },
-      {
+    const userMessage: Message = {
+      id: `u-${Date.now()}`,
+      role: 'user',
+      text: prompt
+    }
+
+    setMessages((prev) => [...prev, userMessage])
+    setInput('')
+    setLoading(true)
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/aris-fast`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.7,
+          max_tokens: 1000
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`Backend error: ${response.statusText}`)
+      }
+
+      const data = await response.json()
+      
+      // Extraer el contenido de forma segura
+      let assistantText = 'No se pudo obtener una respuesta.'
+      
+      if (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) {
+        assistantText = data.choices[0].message.content
+      } else if (typeof data === 'string') {
+        assistantText = data
+      } else if (data.detail) {
+        throw new Error(data.detail)
+      }
+
+      const assistantMessage: Message = {
         id: `a-${Date.now()}`,
         role: 'assistant',
-        text: 'Esta es una respuesta de ejemplo. Más adelante podemos conectar una API real.'
-      },
-    ])
-    setInput('')
+        text: assistantText
+      }
+
+      setMessages((prev) => [...prev, assistantMessage])
+    } catch (error) {
+      const errorText =
+        error instanceof Error
+          ? error.message
+          : 'Error al conectar con el backend. Asegúrate de que está ejecutándose en http://localhost:8000'
+
+      const errorMessage: Message = {
+        id: `e-${Date.now()}`,
+        role: 'assistant',
+        text: `Error: ${errorText}`
+      }
+
+      setMessages((prev) => [...prev, errorMessage])
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleClear = () => {
@@ -64,6 +119,12 @@ function App() {
               <p>{message.text}</p>
             </article>
           ))}
+          {loading && (
+            <article className="chat-message assistant">
+              <span className="message-role">Aris</span>
+              <p>Escribiendo...</p>
+            </article>
+          )}
         </div>
 
         <form className="chat-form" onSubmit={handleSubmit}>
@@ -72,9 +133,10 @@ function App() {
             onChange={(event) => setInput(event.target.value)}
             placeholder="Escribe tu mensaje aquí..."
             autoComplete="off"
+            disabled={loading}
           />
-          <button type="submit" className="primary-button" disabled={!input.trim()}>
-            Enviar
+          <button type="submit" className="primary-button" disabled={!input.trim() || loading}>
+            {loading ? 'Enviando...' : 'Enviar'}
           </button>
         </form>
       </div>
